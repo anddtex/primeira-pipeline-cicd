@@ -23,4 +23,21 @@ jobs:
         tags: |
           anddtex/aula-primeira-pipeline:v${{ github.run_number }}
           anddtex/aula-primeira-pipeline:latest
-        
+  CD:
+    runs-on: ubuntu-latest
+    needs: [CI]
+    steps:
+      - name: Obtendo codigo 
+        uses: actions/checkout@4.1.5
+      - name: Configuração de contexto kubernetes
+        uses: azure/k8s-set-context@4.0.0
+        with:
+          method: kubeconfig
+          kubeconfig:  ${{ secrets.K8S_CONFIG }}
+      - name: Execução do Manifesto
+        uses: Azure/k8s-deploy@v5
+        with:
+          manifests:
+            ./k8s/deployment.yaml
+          images: |
+            anddtex/aula-primeira-pipeline:v${{ github.run_number }}
