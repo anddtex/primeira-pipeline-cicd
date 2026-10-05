@@ -28,9 +28,9 @@ jobs:
     needs: [CI]
     steps:
       - name: Obtendo codigo 
-        uses: actions/checkout@4.0.0
+        uses: actions/checkout@v4
       - name: Configuração de contexto kubernetes
-        uses: azure/k8s-set-context@4.0.0
+        uses: azure/k8s-set-context@v4
         with:
           method: kubeconfig
           kubeconfig:  ${{ secrets.K8S_CONFIG }}
