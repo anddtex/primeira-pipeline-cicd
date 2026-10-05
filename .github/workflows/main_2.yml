@@ -1,43 +1,51 @@
 name: CI-CD
-on: 
+
+on:
   push:
     branches: ["main"]
-  workflow_dispatch: 
+  workflow_dispatch:
+
 jobs:
   CI:
     runs-on: ubuntu-latest
     steps:
-    - name: Obtendo o código
-      uses: actions/checkout@v4.1.5
-    - name: Autenticação no Docker Hub
-      uses: docker/login-action@v3.1.0
-      with:
-        username: ${{ secrets.DOCKERHUB_USERNAME }}
-        password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: Build da Imagem Docker
-      uses: docker/build-push-action@v5.3.0
-      with:
-        context: ./src
-        file: ./src/Dockerfile
-        push: true
-        tags: |
-          anddtex/aula-primeira-pipeline:v${{ github.run_number }}
-          anddtex/aula-primeira-pipeline:latest
+      - name: Obtendo o código
+        uses: actions/checkout@v4.1.5
+
+      - name: Autenticação no Docker Hub
+        uses: docker/login-action@v3.1.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build e Push da Imagem Docker
+        uses: docker/build-push-action@v5.3.0
+        with:
+          context: ./src
+          file: ./src/Dockerfile
+          push: true
+          tags: |
+            anddtex/aula-primeira-pipeline:v${{ github.run_number }}
+            anddtex/aula-primeira-pipeline:latest
+
   CD:
     runs-on: ubuntu-latest
     needs: [CI]
     steps:
-      - name: Obtendo codigo 
+      - name: Obtendo código
         uses: actions/checkout@v4
-      - name: Configuração de contexto kubernetes
-        uses: azure/k8s-set-context@v4
+
+      # Instala o K3d e cria um cluster local no próprio Runner do GitHub
+      - name: Criar cluster K3d local no Runner
+        uses: AbsaGroup/k3d-action@v2
         with:
-          method: kubeconfig
-          kubeconfig: ${{ secrets.K8S_CONFIG }}
+          cluster-name: "k3d-devopspro-security"
+          args: --agents 1
+
       - name: Execução do Manifesto
         uses: Azure/k8s-deploy@v5
         with:
-          manifests:
+          manifests: |
             ./k8s/deployment.yaml
           images: |
             anddtex/aula-primeira-pipeline:v${{ github.run_number }}
