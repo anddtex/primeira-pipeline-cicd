@@ -31,21 +31,20 @@ jobs:
   CD:
     runs-on: ubuntu-latest
     needs: [CI]
-    steps:
-      - name: Obtendo código
-        uses: actions/checkout@v4
-
-      # Instala o K3d e cria um cluster local no próprio Runner do GitHub
-      - name: Criar cluster K3d local no Runner
-        uses: AbsaGroup/k3d-action@v2
-        with:
-          cluster-name: "k3d-devopspro-security"
-          args: --agents 1
-
-      - name: Execução do Manifesto
-        uses: Azure/k8s-deploy@v5
-        with:
-          manifests: |
-            ./k8s/deployment.yaml
-          images: |
-            anddtex/aula-primeira-pipeline:v${{ github.run_number }}
+    steps: 
+    - name: Obtendo o código
+      uses: actions/checkout@v4.1.5
+      
+    - name: Configuração de contexto do Kubernetes
+      uses: azure/k8s-set-context@v4.0.0
+      with:
+        method: kubeconfig
+        kubeconfig: ${{ secrets.K8S_CONFIG_VMUBUNTU }}
+        
+    - name: Execução do Manifesto
+      uses: Azure/k8s-deploy@v5
+      with:
+        manifests: |
+          ./k8s/deployment.yaml
+        images: |
+          anddtex/aula-primeira-pipeline:v${{ github.run_number }}
